@@ -25,18 +25,18 @@ class Client:
         self.thread: threading.Thread | None = None
         self.is_msg_loop = False
 
-    def connect(self, crt: str):
-        self.thread = threading.Thread(target=self._connect, args=(crt, ))
+    def connect(self, crt: str, msg_handler: Callable[[str], None]):
+        self.thread = threading.Thread(target=self._connect, args=(crt, msg_handler))
         self.thread.start()
 
-    def _connect(self, crt: str):
+    def _connect(self, crt: str, msg_handler: Callable[[str], None]):
         try:
             self.change_status(Status.CONNECTING)
             self.sock = socket.create_connection((self.hostname, 8080), timeout=3)
             self.ssl_context.load_verify_locations(crt)
             self.ssock = self.ssl_context.wrap_socket(self.sock, server_hostname=self.hostname)
-            self.ssock.settimeout(3)
             self.change_status(Status.CONNECTED)
+            self.msg_loop(msg_handler)
         except ConnectionError as err:
             print(err)
             self.change_status(Status.DISCONNECTED)
@@ -48,18 +48,25 @@ class Client:
         self.is_msg_loop = True
         self.logger.info('msg loop start')
         while self.is_msg_loop:
-            data = self.ssock.recv(1024)
-            print(data)
-            if data != b'':
-                msg = data.decode("utf-8")
-                self.logger.info(f'Message received: {msg}')
-                msg_handler(msg)
+            try:
+                data = self.ssock.recv(1024)
+                if data != b'':
+                    msg = data.decode("utf-8")
+                    self.logger.info(f'Message received: {msg}')
+                    msg_handler(msg)
+            except socket.timeout:
+                continue
         self.logger.info('msg loop stop')
 
     def disconnect(self):
+        self.is_msg_loop = False
         if self.ssock:
             self.ssock.close()
         self.change_status(Status.DISCONNECTED)
 
     def send_msg(self, msg: str):
-        self.ssock.send(bytes(msg, "utf-8"))
+        try:
+            self.ssock.send(bytes(msg, "utf-8"))
+        except OSError as err:
+            self.disconnect()
+            print(err)

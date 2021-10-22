@@ -1,6 +1,3 @@
 INFO:server:Сервер остановлен
-INFO:server:Ожидание подключения
-INFO:server:Connected ('127.0.0.1', 56943)
-INFO:server:msg loop start
+INFO:server:Close
 INFO:server:Сервер остановлен
-INFO:server:msg loop stop

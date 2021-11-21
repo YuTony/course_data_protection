@@ -2,3 +2,6 @@
 /dist/
 /build/
 *.spec
+/private.key
+/selfsigned.crt
+*.log

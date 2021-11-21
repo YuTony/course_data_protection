@@ -1,4 +1,4 @@
-import threading
+import sys
 
 from PyQt6 import QtWidgets
 
@@ -21,7 +21,7 @@ def main():
     widget1.move(430, 50)
     widget1.show()
 
-    app.exec()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

@@ -15,7 +15,8 @@ class Status(Enum):
 
 class Server:
     def __init__(self, change_status: Callable[[Status], None], msg_handler: Callable[[str], None]):
-        self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        # self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        self.context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 
         self.change_status = change_status
         self.logger = logging.getLogger('server')
@@ -73,10 +74,13 @@ class Server:
         self.logger.info('msg loop start')
         while self.is_msg_loop:
             data = self.conn.recv(1024)
-            if data != b'':
-                msg = data.decode("utf-8")
-                self.logger.info(f'Message received from {self.addr}: {msg}')
-                self.msg_handler(msg)
+            msg = data.decode("utf-8")
+            self.logger.info(f'Message received from {self.addr}: {msg}')
+            self.msg_handler(msg)
+            if not data:
+                print("data = ''")
+                self.stop()
+                break
         self.logger.info('msg loop stop')
 
     def stop(self):

@@ -32,7 +32,7 @@ class Client:
     def _connect(self, crt: str, msg_handler: Callable[[str], None]):
         try:
             self.change_status(Status.CONNECTING)
-            self.sock = socket.create_connection((self.hostname, 8080), timeout=3)
+            self.sock = socket.create_connection((self.hostname, 8080))
             self.ssl_context.load_verify_locations(crt)
             self.ssock = self.ssl_context.wrap_socket(self.sock, server_hostname=self.hostname)
             self.change_status(Status.CONNECTED)
@@ -50,11 +50,15 @@ class Client:
         while self.is_msg_loop:
             try:
                 data = self.ssock.recv(1024)
-                if data != b'':
-                    msg = data.decode("utf-8")
-                    self.logger.info(f'Message received: {msg}')
-                    msg_handler(msg)
+                msg = data.decode("utf-8")
+                self.logger.info(f'Message received: {msg}')
+                msg_handler(msg)
+                if not data:
+                    print("data = ''")
+                    self.disconnect()
+                    break
             except socket.timeout:
+                print('socket.timeout')
                 continue
         self.logger.info('msg loop stop')
 

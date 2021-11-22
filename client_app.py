@@ -39,8 +39,8 @@ class ClientApp(QtWidgets.QWidget):
 
         self.layout = QtWidgets.QVBoxLayout(self)
 
-        self.layout.addLayout(self.ip_layout)
-        self.layout.addLayout(self.port_layout)
+        # self.layout.addLayout(self.ip_layout)
+        # self.layout.addLayout(self.port_layout)
         self.layout.addWidget(self.button_connect)
         self.layout.addWidget(self.button_disconnect)
         self.layout.addSpacing(10)

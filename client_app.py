@@ -16,10 +16,13 @@ class ClientApp(QtWidgets.QWidget):
         self.CLIENT_KEY_FILE = None
 
         logging.basicConfig(level=logging.INFO, handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('client.log', mode='w')
+            logging.StreamHandler()
         ])
         self.logger = logging.getLogger('client')
+        # self.logger.addHandler(logging.StreamHandler())
+        self.logger.addHandler(logging.FileHandler('client.log', mode='w', encoding='utf-8'))
+        self.logger.setLevel(logging.INFO)
+
         self.client: Client = Client(self.set_buttons_status)
 
         self.CERT_FILE = "./trusted_certificates/trusted.crt"
@@ -42,9 +45,16 @@ class ClientApp(QtWidgets.QWidget):
         self.is_auth.addWidget(QtWidgets.QLabel("Включить авторизацию"))
         self.is_auth.addStretch()
 
+        self.layout1 = QtWidgets.QHBoxLayout()
+        self.layout1.addWidget(QtWidgets.QLabel("Минимальная длина ключа: "))
+        self.len_key_field = QtWidgets.QLineEdit()
+        self.layout1.addWidget(self.len_key_field)
+
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.addWidget(self.button_valid_certs)
         self.layout.addWidget(self.button_cert)
+        self.layout.addSpacing(10)
+        self.layout.addLayout(self.layout1)
         self.layout.addSpacing(10)
         self.layout.addLayout(self.is_auth)
         self.layout.addWidget(self.button_connect)
@@ -66,10 +76,19 @@ class ClientApp(QtWidgets.QWidget):
         self.set_buttons_status(Status.DISCONNECTED)
 
     def connect_to_server(self):
-        if not self.is_auth_checkbox.isChecked():
-            self.client.connect(self.CERT_FILE, self.label.setText)
+        if self.len_key_field.text() == "":
+            key_len = 0
         else:
-            self.client.connect(self.CERT_FILE, self.label.setText, self.CLIENT_CERT_FILE, self.CLIENT_KEY_FILE)
+            try:
+                key_len = int(self.len_key_field.text())
+            except ValueError:
+                self.logger.error(f"Parse error: {self.len_key_field.text()}")
+                key_len = 0
+        if not self.is_auth_checkbox.isChecked():
+            self.client.connect(self.CERT_FILE, self.label.setText, key_len)
+        else:
+            self.client.connect(self.CERT_FILE, self.label.setText, key_len,
+                                self.CLIENT_CERT_FILE, self.CLIENT_KEY_FILE)
 
     def close_connection(self):
         self.client.disconnect()

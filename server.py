@@ -38,17 +38,17 @@ class Server:
     def start(self, host: str, port: int, crt: str, privat_key: str, auth: bool):
         self.stopped = False
         self.context.load_cert_chain(crt, privat_key)
-        logging.info(f"load cert chain. cert: {crt}, key: {privat_key}")
+        self.logger.info(f"load cert chain. cert: {crt}, key: {privat_key}")
         if auth:
             self.context.verify_mode = ssl.CERT_REQUIRED
             self.context.load_verify_locations(cafile="./authorized_clients/trusted.crt")
-            logging.info(f"load verify locations ./authorized_clients/clients.crt")
+            self.logger.info(f"load verify locations ./authorized_clients/clients.crt")
         else:
             self.context.verify_mode = ssl.CERT_NONE
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         self.sock.bind((host, port))
         self.sock.listen(1)
-        logging.info(f"listen {host}:{port}")
+        self.logger.info(f"listen {host}:{port}")
         self.ssock = self.context.wrap_socket(self.sock, server_side=True)
         self.wait_connect()
 
@@ -78,7 +78,7 @@ class Server:
             except OSError as err:
                 self.conn.close()
                 self.wait_connect()
-                logging.error(err.strerror)
+                self.logger.error(err.strerror)
 
     def msg_loop(self):
         self.msg_loop_thread = threading.Thread(target=self._msg_loop)

@@ -15,7 +15,7 @@ def error(text: str):
 class SelectClients(QtWidgets.QDialog):
     def __init__(self, path1: str, path2: str):
         super(SelectClients, self).__init__()
-        self.setWindowTitle("Выбор клиентов")
+        self.setWindowTitle("Выбор сертификатов")
 
         self.path1 = path1
         self.path2 = path2

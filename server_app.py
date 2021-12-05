@@ -12,10 +12,12 @@ class ServerApp(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         logging.basicConfig(level=logging.INFO, handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler('server.log', mode='w', encoding='utf-8')
+            logging.StreamHandler()
         ])
         self.logger = logging.getLogger('server')
+        # self.logger.addHandler(logging.StreamHandler())
+        self.logger.addHandler(logging.FileHandler('server.log', mode='w', encoding='utf-8'))
+        self.logger.setLevel(logging.INFO)
         self.server = Server(self.set_buttons_status, lambda msg: self.text_label.setText(msg))
         self.thread = None
 

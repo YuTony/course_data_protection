@@ -26,7 +26,7 @@ def check_associate_cert_with_private_key(cert: str, private_key: str):
 class SelectPair(QtWidgets.QDialog):
     def __init__(self, path: str):
         super(SelectPair, self).__init__()
-        self.setWindowTitle("Выбор сертификата")
+        self.setWindowTitle("Выбор сертификата и ключа")
 
         self.path = path
 

@@ -2,7 +2,13 @@
 ```shell
 pip install -r requirements.txt
 ```
-# Create exe run
+
+# Run
+```shell
+python main.py
+```
+
+# Create exe
 ```shell
 python -O -m PyInstaller --exclude-module _bootlocale --windowed --onefile <file>
 ```

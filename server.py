@@ -11,6 +11,7 @@ class Status(Enum):
     STOPPED = 1
     WAITING = 2
     CONNECTED = 3
+    NOT_SELECTED = 4
 
 
 class Server:
@@ -30,14 +31,24 @@ class Server:
         self.wait_thread: threading.Thread | None = None
         self.msg_loop_thread: threading.Thread | None = None
         self.is_msg_loop = False
+        self.stopped = True
 
         self.msg_handler: Callable[[str], None] = msg_handler
 
-    def start(self, host: str, port: int, crt: str, privat_key: str):
+    def start(self, host: str, port: int, crt: str, privat_key: str, auth: bool):
+        self.stopped = False
         self.context.load_cert_chain(crt, privat_key)
+        logging.info(f"load cert chain. cert: {crt}, key: {privat_key}")
+        if auth:
+            self.context.verify_mode = ssl.CERT_REQUIRED
+            self.context.load_verify_locations(cafile="./authorized_clients/trusted.crt")
+            logging.info(f"load verify locations ./authorized_clients/clients.crt")
+        else:
+            self.context.verify_mode = ssl.CERT_NONE
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         self.sock.bind((host, port))
         self.sock.listen(1)
+        logging.info(f"listen {host}:{port}")
         self.ssock = self.context.wrap_socket(self.sock, server_side=True)
         self.wait_connect()
 
@@ -46,24 +57,28 @@ class Server:
         self.wait_thread.start()
 
     def _wait_connect(self):
-        try:
-            self.change_status(Status.WAITING)
-            self.conn, self.addr = self.ssock.accept()
-            self.change_status(Status.CONNECTED)
-            self.logger.info(f'Connected {self.addr}')
-            self.msg_loop()
-        except OSError:
-            self.logger.info('Socket.accept is forced to terminate')
+        while not self.stopped:
+            try:
+                self.change_status(Status.WAITING)
+                self.logger.info('waiting for connection')
+                self.conn, self.addr = self.ssock.accept()
+                self.change_status(Status.CONNECTED)
+                self.logger.info(f'connected {self.addr}')
+                self.msg_loop()
+                break
+            except OSError as e:
+                # self.logger.info('Socket.accept is forced to terminate')
+                self.logger.error(e.strerror)
 
     def send_msg(self, msg: str):
         if self.conn:
             try:
                 a = self.conn.send(bytes(msg, "utf-8"))
-                print(a)
+                # print(a)
             except OSError as err:
                 self.conn.close()
                 self.wait_connect()
-                print(err)
+                logging.error(err.strerror)
 
     def msg_loop(self):
         self.msg_loop_thread = threading.Thread(target=self._msg_loop)
@@ -78,7 +93,7 @@ class Server:
             self.logger.info(f'Message received from {self.addr}: {msg}')
             self.msg_handler(msg)
             if not data:
-                print("data = ''")
+                # print("data = ''")
                 self.stop()
                 break
         self.logger.info('msg loop stop')
@@ -86,6 +101,7 @@ class Server:
     def stop(self):
         if self.ssock:
             self.is_msg_loop = False
+            self.stopped = True
             if self.conn:
                 self.conn.close()
                 self.conn = None

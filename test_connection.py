@@ -74,8 +74,8 @@ def test_connection():
     server = Server(status_handler1, msg_handler1)
     server.start("localhost", 8080, './server_cert/example4096_1.crt', "./server_cert/example4096_1.key")
 
-    client = Client(status_handler2)
-    client.connect(msg_handler2, "localhost", 8080, './server_cert/example4096_1.crt', 0)
+    client = Client(status_handler2, msg_handler2)
+    client.connect("localhost", 8080, './server_cert/example4096_1.crt', 0)
 
     check_connection(server, client)
 
@@ -84,8 +84,8 @@ def test_invalid_certificate():
     server = Server(status_handler1, msg_handler1)
     server.start("localhost", 8080, './server_cert/example4096_2.crt', "./server_cert/example4096_2.key")
 
-    client = Client(status_handler2)
-    client.connect(msg_handler2, "localhost", 8080, './server_cert/example4096_1.crt', 0)
+    client = Client(status_handler2, msg_handler2)
+    client.connect("localhost", 8080, './server_cert/example4096_1.crt', 0)
 
     check_failure_connection(server, client)
 
@@ -97,8 +97,8 @@ def test_auth():
                  "./server_cert/example4096_1.key",
                  "./client_cert/client1.crt")
 
-    client = Client(status_handler2)
-    client.connect(msg_handler2, "localhost", 8080,
+    client = Client(status_handler2, msg_handler2)
+    client.connect("localhost", 8080,
                    "./server_cert/example4096_1.crt", 0,
                    "./client_cert/client1.crt",
                    "./client_cert/client1.key")
@@ -113,8 +113,8 @@ def test_invalid_auth():
                  "./server_cert/example4096_1.key",
                  "./client_cert/client1.crt")
 
-    client = Client(status_handler2)
-    client.connect(msg_handler2, "localhost", 8080,
+    client = Client(status_handler2, msg_handler2)
+    client.connect("localhost", 8080,
                    "./server_cert/example4096_1.crt", 0,
                    "./client_cert/client2.crt",
                    "./client_cert/client2.key")
@@ -126,8 +126,8 @@ def test_min_key():
     server = Server(status_handler1, msg_handler1)
     server.start("localhost", 8080, './server_cert/example4096_1.crt', "./server_cert/example4096_1.key")
 
-    client = Client(status_handler2)
-    client.connect(msg_handler2, "localhost", 8080, './server_cert/example4096_1.crt', 3000)
+    client = Client(status_handler2, msg_handler2)
+    client.connect("localhost", 8080, './server_cert/example4096_1.crt', 3000)
 
     check_connection(server, client)
 
@@ -136,7 +136,7 @@ def test_invalid_min_key():
     server = Server(status_handler1, msg_handler1)
     server.start("localhost", 8080, './server_cert/server2048.crt', './server_cert/server2048.key')
 
-    client = Client(status_handler2)
-    client.connect(msg_handler2, "localhost", 8080, './server_cert/server2048.crt', 3000)
+    client = Client(status_handler2, msg_handler2)
+    client.connect("localhost", 8080, './server_cert/server2048.crt', 3000)
 
     check_failure_connection(server, client)

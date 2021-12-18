@@ -23,8 +23,6 @@ class ClientApp(QtWidgets.QWidget):
         self.logger.addHandler(logging.FileHandler('client.log', mode='w', encoding='utf-8'))
         self.logger.setLevel(logging.INFO)
 
-        self.client: Client = Client(self.set_buttons_status)
-
         self.CERT_FILE = "./trusted_certificates/trusted.crt"
 
         self.button_connect = QtWidgets.QPushButton("Подключится")
@@ -73,6 +71,8 @@ class ClientApp(QtWidgets.QWidget):
         self.button_disconnect.clicked.connect(self.close_connection)
         self.button_send_msg.clicked.connect(self.send_msg)
 
+        self.client: Client = Client(self.set_buttons_status, self.label.setText)
+
         self.set_buttons_status(Status.DISCONNECTED)
 
     def connect_to_server(self):
@@ -85,9 +85,9 @@ class ClientApp(QtWidgets.QWidget):
                 self.logger.error(f"Parse error: {self.len_key_field.text()}")
                 key_len = 0
         if not self.is_auth_checkbox.isChecked():
-            self.client.connect(self.label.setText, "localhost", 8080, self.CERT_FILE, key_len)
+            self.client.connect("localhost", 8080, self.CERT_FILE, key_len)
         else:
-            self.client.connect(self.label.setText, "localhost", 8080, self.CERT_FILE, key_len,
+            self.client.connect("localhost", 8080, self.CERT_FILE, key_len,
                                 self.CLIENT_CERT_FILE, self.CLIENT_KEY_FILE)
 
     def close_connection(self):

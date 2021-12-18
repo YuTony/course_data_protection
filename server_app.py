@@ -15,10 +15,8 @@ class ServerApp(QtWidgets.QWidget):
             logging.StreamHandler()
         ])
         self.logger = logging.getLogger('server')
-        # self.logger.addHandler(logging.StreamHandler())
         self.logger.addHandler(logging.FileHandler('server.log', mode='w', encoding='utf-8'))
         self.logger.setLevel(logging.INFO)
-        self.server = Server(self.set_buttons_status, lambda msg: self.text_label.setText(msg))
         self.thread = None
 
         self.CERT_FILE = None
@@ -60,6 +58,8 @@ class ServerApp(QtWidgets.QWidget):
         self.button_run.clicked.connect(self.run_server)
         self.button_stop.clicked.connect(self.stop_server)
         self.button_send_msg.clicked.connect(self.send_msg)
+
+        self.server = Server(self.set_buttons_status, self.text_label.setText)
 
         self.set_buttons_status(Status.NOT_SELECTED)
 

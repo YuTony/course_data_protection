@@ -35,10 +35,10 @@ class Client:
         self.port = port
         self.CLIENT_CERT_FILE = ccrt
         self.CLIENT_KEY_FILE = cprivat_key
-        self.thread = threading.Thread(target=self._connect, args=(crt, msg_handler, len_key))
+        self.thread = threading.Thread(target=self.__try_connect, args=(crt, msg_handler, len_key))
         self.thread.start()
 
-    def _connect(self, crt: str, msg_handler: Callable[[str], None], len_key: int):
+    def __try_connect(self, crt: str, msg_handler: Callable[[str], None], len_key: int):
         try:
             self.change_status(Status.CONNECTING)
             # cert = ssl.get_server_certificate((self.hostname, self.port))
@@ -63,7 +63,7 @@ class Client:
                     self.disconnect()
 
             self.change_status(Status.CONNECTED)
-            self.msg_loop(msg_handler)
+            self.__msg_loop(msg_handler)
         except ConnectionError as err:
             self.logger.error(err.strerror)
             self.change_status(Status.DISCONNECTED)
@@ -71,7 +71,7 @@ class Client:
             self.logger.error(err.strerror)
             self.change_status(Status.DISCONNECTED)
 
-    def msg_loop(self, msg_handler: Callable[[str], None]):
+    def __msg_loop(self, msg_handler: Callable[[str], None]):
         self.is_msg_loop = True
         self.logger.info('msg loop start')
         while self.is_msg_loop:

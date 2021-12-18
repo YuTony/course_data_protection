@@ -50,13 +50,13 @@ class Server:
         self.sock.listen(1)
         self.logger.info(f"listen {host}:{port}")
         self.ssock = self.context.wrap_socket(self.sock, server_side=True)
-        self.wait_connect()
+        self.__wait_connect()
 
-    def wait_connect(self):
-        self.wait_thread = threading.Thread(target=self._wait_connect)
+    def __wait_connect(self):
+        self.wait_thread = threading.Thread(target=self.__wait_connect_loop)
         self.wait_thread.start()
 
-    def _wait_connect(self):
+    def __wait_connect_loop(self):
         while not self.stopped:
             try:
                 self.change_status_handler(Status.WAITING)
@@ -64,7 +64,7 @@ class Server:
                 self.conn, self.addr = self.ssock.accept()
                 self.change_status_handler(Status.CONNECTED)
                 self.logger.info(f'connected {self.addr}')
-                self.msg_loop()
+                self.__msg_loop_start()
                 break
             except OSError as e:
                 # self.logger.info('Socket.accept is forced to terminate')
@@ -77,14 +77,14 @@ class Server:
                 # print(a)
             except OSError as err:
                 self.conn.close()
-                self.wait_connect()
+                self.__wait_connect()
                 self.logger.error(err.strerror)
 
-    def msg_loop(self):
-        self.msg_loop_thread = threading.Thread(target=self._msg_loop)
+    def __msg_loop_start(self):
+        self.msg_loop_thread = threading.Thread(target=self.__msg_loop)
         self.msg_loop_thread.start()
 
-    def _msg_loop(self):
+    def __msg_loop(self):
         self.is_msg_loop = True
         self.logger.info('msg loop start')
         while self.is_msg_loop:
@@ -93,7 +93,7 @@ class Server:
             self.logger.info(f'Message received from {self.addr}: {msg}')
             self.msg_handler(msg)
             if not data:
-                self.wait_connect()
+                self.__wait_connect()
                 break
         self.logger.info('msg loop stop')
 

@@ -101,3 +101,8 @@ class Client:
         except OSError as err:
             self.disconnect()
             self.logger.error(err.strerror)
+
+    def __del__(self):
+        self.is_msg_loop = False
+        if self.ssock:
+            self.ssock.close()

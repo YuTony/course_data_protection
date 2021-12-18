@@ -74,7 +74,10 @@ class ServerApp(QtWidgets.QWidget):
         SelectClients.select_certs("./client_cert/", "./authorized_clients/")
 
     def run_server(self):
-        self.server.start('localhost', 8080, self.CERT_FILE, self.KEY_FILE, self.is_auth_checkbox.isChecked())
+        if not self.is_auth_checkbox.isChecked():
+            self.server.start('localhost', 8080, self.CERT_FILE, self.KEY_FILE)
+        else:
+            self.server.start('localhost', 8080, self.CERT_FILE, self.KEY_FILE, "./authorized_clients/trusted.crt")
 
     def stop_server(self):
         self.server.stop()

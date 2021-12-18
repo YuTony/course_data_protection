@@ -35,14 +35,14 @@ class Server:
 
         self.msg_handler: Callable[[str], None] = msg_handler
 
-    def start(self, host: str, port: int, crt: str, privat_key: str, auth: bool):
+    def start(self, host: str, port: int, crt: str, privat_key: str, auth: str = None):
         self.stopped = False
         self.context.load_cert_chain(crt, privat_key)
         self.logger.info(f"load cert chain. cert: {crt}, key: {privat_key}")
         if auth:
             self.context.verify_mode = ssl.CERT_REQUIRED
-            self.context.load_verify_locations(cafile="./authorized_clients/trusted.crt")
-            self.logger.info(f"load verify locations ./authorized_clients/clients.crt")
+            self.context.load_verify_locations(cafile=auth)
+            self.logger.info(f"load verify locations {auth}")
         else:
             self.context.verify_mode = ssl.CERT_NONE
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
@@ -93,8 +93,7 @@ class Server:
             self.logger.info(f'Message received from {self.addr}: {msg}')
             self.msg_handler(msg)
             if not data:
-                # print("data = ''")
-                self.stop()
+                self.wait_connect()
                 break
         self.logger.info('msg loop stop')
 
@@ -108,3 +107,6 @@ class Server:
             self.ssock.close()
             self.ssock = None
         self.change_status_handler(Status.STOPPED)
+
+    def __del__(self):
+        self.stop()

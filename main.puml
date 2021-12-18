@@ -3,7 +3,7 @@
 
 'ServerApp *-- Server
 
-Server *-- Status
+Server <-- Status
 
 class Server {
 __init__(self, change_status: Callable[[Status], None], msg_handler: Callable[[str], None])

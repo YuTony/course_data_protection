@@ -85,9 +85,9 @@ class ClientApp(QtWidgets.QWidget):
                 self.logger.error(f"Parse error: {self.len_key_field.text()}")
                 key_len = 0
         if not self.is_auth_checkbox.isChecked():
-            self.client.connect(self.CERT_FILE, self.label.setText, key_len)
+            self.client.connect(self.label.setText, "localhost", 8080, self.CERT_FILE, key_len)
         else:
-            self.client.connect(self.CERT_FILE, self.label.setText, key_len,
+            self.client.connect(self.label.setText, "localhost", 8080, self.CERT_FILE, key_len,
                                 self.CLIENT_CERT_FILE, self.CLIENT_KEY_FILE)
 
     def close_connection(self):

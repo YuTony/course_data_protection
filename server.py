@@ -19,7 +19,7 @@ class Server:
         # self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         self.context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
 
-        self.change_status = change_status
+        self.change_status_handler = change_status
         self.logger = logging.getLogger('server')
 
         self.sock: socket = None
@@ -59,10 +59,10 @@ class Server:
     def _wait_connect(self):
         while not self.stopped:
             try:
-                self.change_status(Status.WAITING)
+                self.change_status_handler(Status.WAITING)
                 self.logger.info('waiting for connection')
                 self.conn, self.addr = self.ssock.accept()
-                self.change_status(Status.CONNECTED)
+                self.change_status_handler(Status.CONNECTED)
                 self.logger.info(f'connected {self.addr}')
                 self.msg_loop()
                 break
@@ -107,4 +107,4 @@ class Server:
                 self.conn = None
             self.ssock.close()
             self.ssock = None
-        self.change_status(Status.STOPPED)
+        self.change_status_handler(Status.STOPPED)

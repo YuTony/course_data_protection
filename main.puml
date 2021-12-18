@@ -1,0 +1,46 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+'ServerApp *-- Server
+
+Server *-- Status
+
+class Server {
+__init__(self, change_status: Callable[[Status], None], msg_handler: Callable[[str], None])
+start(self, host: str, port: int, crt: str, privat_key: str, auth: bool)
+wait_connect(self)
+_wait_connect(self)
+send_msg(self, msg: str)
+msg_loop(self)
+_msg_loop(self)
+stop(self)
+
+sock: socket
+ssock: ssl.SSLSocket
+msg_loop_thread: threading.Thread
+conn: ssl.SSLSocket
+stopped: bool
+logger: Logger
+context: SSLContext
+wait_thread: threading.Thread
+is_msg_loop: bool
+change_status_handler: Callable[[Status], None]
+addr: Any
+msg_handler: Callable[[str], None]
+}
+
+enum Status {
+    STOPPED
+    WAITING
+    CONNECTED
+    NOT_SELECTED
+}
+
+'class ServerApp {
+'__init__(self)
+'get_cert(self)
+'
+'text_label
+'}
+
+@enduml

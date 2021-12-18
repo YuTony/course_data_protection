@@ -33,11 +33,11 @@ class ServerApp(QtWidgets.QWidget):
 
         self.text_label.setStyleSheet("border: 1px solid black")
 
-        self.is_auth = QtWidgets.QHBoxLayout()
+        self.is_auth_layout = QtWidgets.QHBoxLayout()
         self.is_auth_checkbox = QtWidgets.QCheckBox()
-        self.is_auth.addWidget(self.is_auth_checkbox)
-        self.is_auth.addWidget(QtWidgets.QLabel("Включить авторизацию"))
-        self.is_auth.addStretch()
+        self.is_auth_layout.addWidget(self.is_auth_checkbox)
+        self.is_auth_layout.addWidget(QtWidgets.QLabel("Включить авторизацию"))
+        self.is_auth_layout.addStretch()
 
         self.select_client_btn = QtWidgets.QPushButton("Выбрать сертификаты клиентов")
 
@@ -45,7 +45,7 @@ class ServerApp(QtWidgets.QWidget):
         self.layout.addWidget(self.button_cert)
         self.layout.addWidget(self.select_client_btn)
         self.layout.addSpacing(10)
-        self.layout.addLayout(self.is_auth)
+        self.layout.addLayout(self.is_auth_layout)
         self.layout.addWidget(self.button_run)
         self.layout.addWidget(self.button_stop)
         self.layout.addSpacing(10)
@@ -97,7 +97,6 @@ class ServerApp(QtWidgets.QWidget):
             self.button_stop.setDisabled(False)
             self.button_send_msg.setDisabled(True)
             self.text_field.setDisabled(True)
-            # self.logger.info('Ожидание подключения')
         elif status == Status.CONNECTED:
             self.select_client_btn.setDisabled(True)
             self.is_auth_checkbox.setDisabled(True)

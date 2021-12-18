@@ -29,8 +29,10 @@ class Client:
         self.thread: threading.Thread | None = None
         self.is_msg_loop = False
 
-    def connect(self, crt: str, msg_handler: Callable[[str], None], len_key: int, ccrt=None, cprivat_key=None):
+    def connect(self, msg_handler: Callable[[str], None], hostname: str, port: int, crt: str, len_key: int, ccrt=None, cprivat_key=None):
         self.is_auth = ccrt is not None and cprivat_key is not None
+        self.hostname = hostname
+        self.port = port
         self.CLIENT_CERT_FILE = ccrt
         self.CLIENT_KEY_FILE = cprivat_key
         self.thread = threading.Thread(target=self._connect, args=(crt, msg_handler, len_key))

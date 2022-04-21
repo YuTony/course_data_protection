@@ -16,8 +16,7 @@ class Status(Enum):
 
 class Server:
     def __init__(self, change_status: Callable[[Status], None], msg_handler: Callable[[str], None]):
-        # self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        self.context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+        self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 
         self.change_status_handler = change_status
         self.logger = logging.getLogger('server')
@@ -45,6 +44,7 @@ class Server:
             self.logger.info(f"load verify locations {auth}")
         else:
             self.context.verify_mode = ssl.CERT_NONE
+        self.logger.info(f"{self.context.maximum_version}, {self.context.minimum_version}")
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         self.sock.bind((host, port))
         self.sock.listen(1)
@@ -97,7 +97,7 @@ class Server:
                 break
         self.logger.info('msg loop stop')
 
-    def stop(self):
+    def stop(self, ignore_status=False):
         if self.ssock:
             self.is_msg_loop = False
             self.stopped = True
@@ -106,7 +106,8 @@ class Server:
                 self.conn = None
             self.ssock.close()
             self.ssock = None
-        self.change_status_handler(Status.STOPPED)
+        if not ignore_status:
+            self.change_status_handler(Status.STOPPED)
 
     def __del__(self):
-        self.stop()
+        self.stop(ignore_status=True)

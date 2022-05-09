@@ -2,8 +2,8 @@ import sys
 
 from PyQt6 import QtWidgets
 
-from server_app import ServerApp
-from client_app import ClientApp
+from src.server.server_app import ServerApp
+from src.client.client_app import ClientApp
 
 
 def main():

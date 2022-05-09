@@ -3,9 +3,9 @@ import sys
 
 from PyQt6 import QtWidgets, QtGui
 
-from client import Status, Client
-from select_pair import SelectPair
-from select_clients import SelectClients
+from src.client.client import Status, Client
+from src.tools.select_pair import SelectPair
+from src.tools.select_clients import SelectClients
 
 
 class ClientApp(QtWidgets.QWidget):

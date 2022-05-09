@@ -1,7 +1,7 @@
 from time import sleep
 
-from client import Client, Status as clientStatus
-from server import Server, Status as serverStatus
+from src.client.client import Client, Status as clientStatus
+from src.server.server import Server, Status as serverStatus
 
 msg_s: str | None
 msg_c: str | None

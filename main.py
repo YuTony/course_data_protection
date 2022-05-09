@@ -9,17 +9,17 @@ from client_app import ClientApp
 def main():
     app = QtWidgets.QApplication([])
 
-    widget = ServerApp()
-    widget.setWindowTitle("Server")
-    widget.resize(400, 300)
-    widget.move(10, 50)
-    widget.show()
+    server_app = ServerApp()
+    server_app.setWindowTitle("Server")
+    server_app.resize(400, 300)
+    server_app.move(10, 50)
+    server_app.show()
 
-    widget1 = ClientApp()
-    widget1.setWindowTitle("Client")
-    widget1.resize(400, 300)
-    widget1.move(430, 50)
-    widget1.show()
+    client_app = ClientApp()
+    client_app.setWindowTitle("Client")
+    client_app.resize(400, 300)
+    client_app.move(430, 50)
+    client_app.show()
 
     sys.exit(app.exec())
 

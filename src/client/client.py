@@ -45,6 +45,7 @@ class Client:
             self.sock = socket.create_connection((self.hostname, self.port))
             self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             self.ssl_context.load_verify_locations(crt)
+            self.ssl_context.load_default_certs()
             self.logger.info(f"{self.ssl_context.maximum_version}, {self.ssl_context.minimum_version}")
             self.logger.info(f"create default context. cert: {crt}")
             if self.is_auth:

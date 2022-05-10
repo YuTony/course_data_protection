@@ -14,8 +14,9 @@ class Status(Enum):
 
 
 class Client:
-    def __init__(self, change_status: Callable[[Status], None]):
+    def __init__(self, change_status: Callable[[Status], None], msg_handler: Callable[[str], None]):
         self.change_status = change_status
+        self.msg_handler = msg_handler
         self.logger = logging.getLogger('client')
         self.hostname = 'localhost'
 
@@ -29,23 +30,23 @@ class Client:
         self.thread: threading.Thread | None = None
         self.is_msg_loop = False
 
-    def connect(self, crt: str, msg_handler: Callable[[str], None], len_key: int, ccrt=None, cprivat_key=None):
+    def connect(self, hostname: str, port: int, crt: str, len_key: int, ccrt=None, cprivat_key=None):
         self.is_auth = ccrt is not None and cprivat_key is not None
+        self.hostname = hostname
+        self.port = port
         self.CLIENT_CERT_FILE = ccrt
         self.CLIENT_KEY_FILE = cprivat_key
-        self.thread = threading.Thread(target=self._connect, args=(crt, msg_handler, len_key))
+        self.thread = threading.Thread(target=self.__try_connect, args=(crt, len_key))
         self.thread.start()
 
-    def _connect(self, crt: str, msg_handler: Callable[[str], None], len_key: int):
+    def __try_connect(self, crt: str, len_key: int):
         try:
             self.change_status(Status.CONNECTING)
-            # cert = ssl.get_server_certificate((self.hostname, self.port))
-            # cert = crypto.load_certificate(crypto.FILETYPE_PEM, cert)
-            # print(cert.get_pubkey().bits())
             self.sock = socket.create_connection((self.hostname, self.port))
-            self.ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH, cafile=crt)
+            self.ssl_context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            self.ssl_context.load_verify_locations(crt)
+            self.logger.info(f"{self.ssl_context.maximum_version}, {self.ssl_context.minimum_version}")
             self.logger.info(f"create default context. cert: {crt}")
-            # self.ssl_context.load_verify_locations(crt)
             if self.is_auth:
                 self.ssl_context.load_cert_chain(self.CLIENT_CERT_FILE, self.CLIENT_KEY_FILE)
                 self.logger.info(f"load cert chain. cert: {self.CLIENT_CERT_FILE}, private key: {self.CLIENT_KEY_FILE}")
@@ -61,7 +62,7 @@ class Client:
                     self.disconnect()
 
             self.change_status(Status.CONNECTED)
-            self.msg_loop(msg_handler)
+            self.__msg_loop()
         except ConnectionError as err:
             self.logger.error(err.strerror)
             self.change_status(Status.DISCONNECTED)
@@ -69,7 +70,7 @@ class Client:
             self.logger.error(err.strerror)
             self.change_status(Status.DISCONNECTED)
 
-    def msg_loop(self, msg_handler: Callable[[str], None]):
+    def __msg_loop(self):
         self.is_msg_loop = True
         self.logger.info('msg loop start')
         while self.is_msg_loop:
@@ -77,9 +78,8 @@ class Client:
                 data = self.ssock.recv(1024)
                 msg = data.decode("utf-8")
                 self.logger.info(f'Message received: {msg}')
-                msg_handler(msg)
+                self.msg_handler(msg)
                 if not data:
-                    # print("data = ''")
                     self.disconnect()
                     break
             except socket.timeout:
@@ -99,3 +99,8 @@ class Client:
         except OSError as err:
             self.disconnect()
             self.logger.error(err.strerror)
+
+    def __del__(self):
+        self.is_msg_loop = False
+        if self.ssock:
+            self.ssock.close()

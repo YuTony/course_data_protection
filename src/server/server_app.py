@@ -3,9 +3,9 @@ import sys
 
 from PyQt6 import QtWidgets, QtGui
 
-from server import Status, Server
-from select_pair import SelectPair
-from select_clients import SelectClients
+from src.server.server import Status, Server
+from src.tools.select_pair import SelectPair
+from src.tools.select_clients import SelectClients
 
 
 class ServerApp(QtWidgets.QWidget):
@@ -15,10 +15,8 @@ class ServerApp(QtWidgets.QWidget):
             logging.StreamHandler()
         ])
         self.logger = logging.getLogger('server')
-        # self.logger.addHandler(logging.StreamHandler())
         self.logger.addHandler(logging.FileHandler('server.log', mode='w', encoding='utf-8'))
         self.logger.setLevel(logging.INFO)
-        self.server = Server(self.set_buttons_status, lambda msg: self.text_label.setText(msg))
         self.thread = None
 
         self.CERT_FILE = None
@@ -33,11 +31,11 @@ class ServerApp(QtWidgets.QWidget):
 
         self.text_label.setStyleSheet("border: 1px solid black")
 
-        self.is_auth = QtWidgets.QHBoxLayout()
+        self.is_auth_layout = QtWidgets.QHBoxLayout()
         self.is_auth_checkbox = QtWidgets.QCheckBox()
-        self.is_auth.addWidget(self.is_auth_checkbox)
-        self.is_auth.addWidget(QtWidgets.QLabel("Включить авторизацию"))
-        self.is_auth.addStretch()
+        self.is_auth_layout.addWidget(self.is_auth_checkbox)
+        self.is_auth_layout.addWidget(QtWidgets.QLabel("Включить авторизацию"))
+        self.is_auth_layout.addStretch()
 
         self.select_client_btn = QtWidgets.QPushButton("Выбрать сертификаты клиентов")
 
@@ -45,7 +43,7 @@ class ServerApp(QtWidgets.QWidget):
         self.layout.addWidget(self.button_cert)
         self.layout.addWidget(self.select_client_btn)
         self.layout.addSpacing(10)
-        self.layout.addLayout(self.is_auth)
+        self.layout.addLayout(self.is_auth_layout)
         self.layout.addWidget(self.button_run)
         self.layout.addWidget(self.button_stop)
         self.layout.addSpacing(10)
@@ -61,6 +59,8 @@ class ServerApp(QtWidgets.QWidget):
         self.button_stop.clicked.connect(self.stop_server)
         self.button_send_msg.clicked.connect(self.send_msg)
 
+        self.server = Server(self.set_buttons_status, self.text_label.setText)
+
         self.set_buttons_status(Status.NOT_SELECTED)
 
     def get_cert(self):
@@ -74,7 +74,10 @@ class ServerApp(QtWidgets.QWidget):
         SelectClients.select_certs("./client_cert/", "./authorized_clients/")
 
     def run_server(self):
-        self.server.start('localhost', 8080, self.CERT_FILE, self.KEY_FILE, self.is_auth_checkbox.isChecked())
+        if not self.is_auth_checkbox.isChecked():
+            self.server.start('localhost', 8080, self.CERT_FILE, self.KEY_FILE)
+        else:
+            self.server.start('localhost', 8080, self.CERT_FILE, self.KEY_FILE, "./authorized_clients/trusted.crt")
 
     def stop_server(self):
         self.server.stop()
@@ -97,7 +100,6 @@ class ServerApp(QtWidgets.QWidget):
             self.button_stop.setDisabled(False)
             self.button_send_msg.setDisabled(True)
             self.text_field.setDisabled(True)
-            # self.logger.info('Ожидание подключения')
         elif status == Status.CONNECTED:
             self.select_client_btn.setDisabled(True)
             self.is_auth_checkbox.setDisabled(True)

@@ -1,5 +1,6 @@
 from os import listdir, remove
 from os.path import isfile, join
+import re
 
 from PyQt6 import QtWidgets
 
@@ -41,7 +42,7 @@ class SelectClients(QtWidgets.QDialog):
 
     def get_list_of_files(self):
         files = [f for f in listdir(self.path1)
-                 if isfile(join(self.path1, f))]
+                 if isfile(join(self.path1, f)) and re.search(r"^\w*\.crt$", f)]
         self.certList.addItems(files)
 
     def select_items(self):

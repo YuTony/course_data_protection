@@ -16,10 +16,9 @@ class Status(Enum):
 
 class Server:
     def __init__(self, change_status: Callable[[Status], None], msg_handler: Callable[[str], None]):
-        # self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        self.context = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+        self.context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
 
-        self.change_status = change_status
+        self.change_status_handler = change_status
         self.logger = logging.getLogger('server')
 
         self.sock: socket = None
@@ -35,36 +34,37 @@ class Server:
 
         self.msg_handler: Callable[[str], None] = msg_handler
 
-    def start(self, host: str, port: int, crt: str, privat_key: str, auth: bool):
+    def start(self, host: str, port: int, crt: str, privat_key: str, auth: str = None):
         self.stopped = False
         self.context.load_cert_chain(crt, privat_key)
         self.logger.info(f"load cert chain. cert: {crt}, key: {privat_key}")
         if auth:
             self.context.verify_mode = ssl.CERT_REQUIRED
-            self.context.load_verify_locations(cafile="./authorized_clients/trusted.crt")
-            self.logger.info(f"load verify locations ./authorized_clients/clients.crt")
+            self.context.load_verify_locations(cafile=auth)
+            self.logger.info(f"load verify locations {auth}")
         else:
             self.context.verify_mode = ssl.CERT_NONE
+        self.logger.info(f"{self.context.maximum_version}, {self.context.minimum_version}")
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0)
         self.sock.bind((host, port))
         self.sock.listen(1)
         self.logger.info(f"listen {host}:{port}")
         self.ssock = self.context.wrap_socket(self.sock, server_side=True)
-        self.wait_connect()
+        self.__wait_connect()
 
-    def wait_connect(self):
-        self.wait_thread = threading.Thread(target=self._wait_connect)
+    def __wait_connect(self):
+        self.wait_thread = threading.Thread(target=self.__wait_connect_loop)
         self.wait_thread.start()
 
-    def _wait_connect(self):
+    def __wait_connect_loop(self):
         while not self.stopped:
             try:
-                self.change_status(Status.WAITING)
+                self.change_status_handler(Status.WAITING)
                 self.logger.info('waiting for connection')
                 self.conn, self.addr = self.ssock.accept()
-                self.change_status(Status.CONNECTED)
+                self.change_status_handler(Status.CONNECTED)
                 self.logger.info(f'connected {self.addr}')
-                self.msg_loop()
+                self.__msg_loop_start()
                 break
             except OSError as e:
                 # self.logger.info('Socket.accept is forced to terminate')
@@ -77,14 +77,14 @@ class Server:
                 # print(a)
             except OSError as err:
                 self.conn.close()
-                self.wait_connect()
+                self.__wait_connect()
                 self.logger.error(err.strerror)
 
-    def msg_loop(self):
-        self.msg_loop_thread = threading.Thread(target=self._msg_loop)
+    def __msg_loop_start(self):
+        self.msg_loop_thread = threading.Thread(target=self.__msg_loop)
         self.msg_loop_thread.start()
 
-    def _msg_loop(self):
+    def __msg_loop(self):
         self.is_msg_loop = True
         self.logger.info('msg loop start')
         while self.is_msg_loop:
@@ -93,12 +93,11 @@ class Server:
             self.logger.info(f'Message received from {self.addr}: {msg}')
             self.msg_handler(msg)
             if not data:
-                # print("data = ''")
-                self.stop()
+                self.__wait_connect()
                 break
         self.logger.info('msg loop stop')
 
-    def stop(self):
+    def stop(self, ignore_status=False):
         if self.ssock:
             self.is_msg_loop = False
             self.stopped = True
@@ -107,4 +106,8 @@ class Server:
                 self.conn = None
             self.ssock.close()
             self.ssock = None
-        self.change_status(Status.STOPPED)
+        if not ignore_status:
+            self.change_status_handler(Status.STOPPED)
+
+    def __del__(self):
+        self.stop(ignore_status=True)

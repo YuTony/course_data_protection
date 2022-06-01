@@ -5,12 +5,12 @@ pip install -r requirements.txt
 
 # Run
 ```shell
-python main.py
+python src/main.py
 ```
 
 # Create exe
 ```shell
-python -O -m PyInstaller --exclude-module _bootlocale --windowed --onefile <file>
+python -O -m PyInstaller --windowed --onefile .\src\main.py
 ```
 
 # Create cert
